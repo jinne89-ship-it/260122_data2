@@ -7,11 +7,17 @@ import seaborn as sns
 # 1. 데이터 로드
 # ---------------------------
 @st.cache_data
-def load_data():
-    df = pd.read_csv("tuitionfee.csv")
-    return df
+def load_data(path: str):
+    encodings = ["utf-8-sig", "utf-8", "cp949", "euc-kr"]
+    last_err = None
+    for enc in encodings:
+        try:
+            return pd.read_csv(path, encoding=enc)
+        except UnicodeDecodeError as e:
+            last_err = e
+    raise last_err
 
-df = load_data()
+df = load_data("tuitionfee.csv")
 
 st.title("🎓 전국 대학 평균 등록금 대시보드")
 
