@@ -8,7 +8,7 @@ import seaborn as sns
 # ---------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("전국대학별평균등록금정보표준데이터.csv")
+    df = pd.read_csv("tuitionfee.csv")
     return df
 
 df = load_data()
