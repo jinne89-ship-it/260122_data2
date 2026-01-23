@@ -357,19 +357,24 @@ if st.session_state.pending_message:
 [현재 필터 결과 요약 통계]
 {filtered_stats}
 """
-        try:
-            resp = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    *st.session_state.chat_history[-10:],
-                ],
-                temperature=0.5,
-            )
-            answer = resp.choices[0].message.content
-            st.session_state.chat_history.append({"role": "assistant", "content": answer})
-        except Exception as e:
-            st.session_state.chat_history.append({"role": "assistant", "content": f"오류가 발생했어요: {e}"})
+thinking_idx = len(st.session_state.chat_history)
+st.session_state.chat_history.append({"role": "assistant", "content": "생각 중이에요... ⏳"})
+
+with st.sidebar.spinner("답변 생성 중입니다... 잠시만 기다려 주세요 🙂"):
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                *st.session_state.chat_history[-10:],  # thinking 포함되어도 무방
+            ],
+            temperature=0.5,
+        )
+        answer = resp.choices[0].message.content
+        st.session_state.chat_history[thinking_idx] = {"role": "assistant", "content": answer}
+    except Exception as e:
+        st.session_state.chat_history[thinking_idx] = {"role": "assistant", "content": f"오류가 발생했어요: {e}"}
+
 
     # ✅ 입력창을 비우고 싶다면? -> 위젯 key를 건드리면 안 됨.
     # 대신 rerun으로 새 run에서 초기화되도록, '입력창 key'에 default를 주는 구조로 바꿔야 함.
