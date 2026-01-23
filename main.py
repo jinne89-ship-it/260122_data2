@@ -261,7 +261,7 @@ st.download_button(
 )
 
 # =========================================================
-# 7. (추가) 사이드바 하단: 고등학생 상담 챗봇(OpenAI)
+# 7. (추가) 사이드바 하단: 고등학생 상담 챗봇(OpenAI) - 안정 버전
 # =========================================================
 st.sidebar.divider()
 st.sidebar.subheader("💬 등록금 상담 챗봇 (고등학생용)")
@@ -283,13 +283,16 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "안녕하세요! 원하는 지역/설립형태/대학구분을 말해주면 등록금 데이터를 바탕으로 비교를 도와줄게요 😊"}
     ]
 
+# 입력 버퍼(위젯과 분리)
+if "chat_draft" not in st.session_state:
+    st.session_state.chat_draft = ""
+
 # 현재 화면 필터/통계(챗봇 컨텍스트)
 filter_summary = {
     "기준연도": year,
     "시도명": region if region else "전체",
     "설립형태": found_type if found_type else "전체",
 }
-
 filtered_stats = {
     "대학수": univ_count,
     "평균등록금": None if pd.isna(avg_tuition) else float(avg_tuition),
@@ -304,12 +307,12 @@ for msg in st.session_state.chat_history[-8:]:
     else:
         st.sidebar.markdown(f"**🤖상담:** {msg['content']}")
 
-user_input = st.sidebar.text_input("질문을 입력하세요", key="chat_input")
+def send_message():
+    user_text = st.session_state.chat_draft.strip()
+    if not user_text:
+        return
 
-send = st.sidebar.button("전송", use_container_width=True)
-
-if send and user_input.strip():
-    st.session_state.chat_history.append({"role": "user", "content": user_input.strip()})
+    st.session_state.chat_history.append({"role": "user", "content": user_text})
 
     if client is None:
         st.session_state.chat_history.append({
@@ -332,13 +335,12 @@ if send and user_input.strip():
 [현재 필터 결과 요약 통계]
 {filtered_stats}
 """
-
         try:
             resp = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    *st.session_state.chat_history[-10:],  # 최근 대화만
+                    *st.session_state.chat_history[-10:],
                 ],
                 temperature=0.5,
             )
@@ -347,5 +349,17 @@ if send and user_input.strip():
         except Exception as e:
             st.session_state.chat_history.append({"role": "assistant", "content": f"오류가 발생했어요: {e}"})
 
-    st.session_state.chat_input = ""
+    # ✅ 위젯 key를 직접 만지지 않고, draft만 비움(안전)
+    st.session_state.chat_draft = ""
+
+# ✅ Enter 치면 전송되도록 on_change 사용
+st.sidebar.text_input(
+    "질문을 입력하세요 (Enter로 전송)",
+    key="chat_draft",
+    on_change=send_message
+)
+
+# 버튼 전송도 같이 제공(선택)
+if st.sidebar.button("전송", use_container_width=True):
+    send_message()
     st.rerun()
