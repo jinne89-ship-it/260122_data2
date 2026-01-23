@@ -29,7 +29,7 @@ df = load_data("tuitionfee.csv")
 st.title("🎓 전국 대학 평균 등록금 대시보드")
 
 # ---------------------------
-# 2. 사이드바 필터 
+# 2. 사이드바 필터
 # ---------------------------
 st.sidebar.header("필터")
 
@@ -301,4 +301,51 @@ filtered_stats = {
 for msg in st.session_state.chat_history[-8:]:
     if msg["role"] == "user":
         st.sidebar.markdown(f"**🙋‍학생:** {msg['content']}")
-    else
+    else:
+        st.sidebar.markdown(f"**🤖상담:** {msg['content']}")
+
+user_input = st.sidebar.text_input("질문을 입력하세요", key="chat_input")
+
+send = st.sidebar.button("전송", use_container_width=True)
+
+if send and user_input.strip():
+    st.session_state.chat_history.append({"role": "user", "content": user_input.strip()})
+
+    if client is None:
+        st.session_state.chat_history.append({
+            "role": "assistant",
+            "content": "API 키가 설정되지 않았어요. Streamlit Secrets(OPENAI_API_KEY) 또는 환경변수를 설정해 주세요."
+        })
+    else:
+        system_prompt = f"""
+너는 고등학생을 위한 대학 등록금 상담 챗봇이야.
+- 친절하고 쉬운 한국어로 답해.
+- 이 앱은 '전국 대학 평균 등록금 공공데이터'를 기반으로 한다.
+- 현재 화면의 필터/통계를 참고해서 설명해.
+- 특정 대학 합격을 보장하거나 과도한 단정/비방을 하지 마.
+- 개인정보(전화번호, 주민번호 등)를 요구하지 마.
+- 가능한 경우 선택지를 2~3개로 정리해주고, 다음 질문을 제안해.
+
+[현재 필터]
+{filter_summary}
+
+[현재 필터 결과 요약 통계]
+{filtered_stats}
+"""
+
+        try:
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    *st.session_state.chat_history[-10:],  # 최근 대화만
+                ],
+                temperature=0.5,
+            )
+            answer = resp.choices[0].message.content
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
+        except Exception as e:
+            st.session_state.chat_history.append({"role": "assistant", "content": f"오류가 발생했어요: {e}"})
+
+    st.session_state.chat_input = ""
+    st.rerun()
