@@ -366,14 +366,15 @@ with st.sidebar.spinner("답변 생성 중입니다... 잠시만 기다려 주�
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
-                *st.session_state.chat_history[-10:],  # thinking 포함되어도 무방
+                *st.session_state.chat_history[-10:],
             ],
             temperature=0.5,
         )
         answer = resp.choices[0].message.content
-        st.session_state.chat_history[thinking_idx] = {"role": "assistant", "content": answer}
+        st.session_state.chat_history.append({"role": "assistant", "content": answer})
     except Exception as e:
-        st.session_state.chat_history[thinking_idx] = {"role": "assistant", "content": f"오류가 발생했어요: {e}"}
+        st.session_state.chat_history.append({"role": "assistant", "content": f"오류가 발생했어요: {e}"})
+
 
 
     # ✅ 입력창을 비우고 싶다면? -> 위젯 key를 건드리면 안 됨.
