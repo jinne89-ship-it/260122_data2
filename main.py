@@ -319,9 +319,16 @@ def queue_message():
         st.session_state.pending_message = text
 
 # Enter로 전송: on_change에서 queue만 수행
+#st.sidebar.text_input(
+#    "질문을 입력하세요 (Enter로 전송)",
+#    key="chat_input_box",
+#    on_change=queue_message
+#)
+chat_box_key = f"chat_input_box_{st.session_state.chat_input_key}"
+
 st.sidebar.text_input(
     "질문을 입력하세요 (Enter로 전송)",
-    key="chat_input_box",
+    key=chat_box_key,
     on_change=queue_message
 )
 
