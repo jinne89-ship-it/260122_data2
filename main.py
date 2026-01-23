@@ -357,20 +357,21 @@ if st.session_state.pending_message:
 [현재 필터 결과 요약 통계]
 {filtered_stats}
 """
-with st.sidebar.spinner("답변 생성 중입니다... 잠시만 기다려 주세요 🙂"):
-    try:
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                *st.session_state.chat_history[-10:],
-            ],
-            temperature=0.5,
-        )
-        answer = resp.choices[0].message.content
-        st.session_state.chat_history.append({"role": "assistant", "content": answer})
-    except Exception as e:
-        st.session_state.chat_history.append({"role": "assistant", "content": f"오류가 발생했어요: {e}"})
+
+        with st.sidebar.spinner("답변 생성 중입니다... 잠시만 기다려 주세요 🙂"):
+            try:
+                resp = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        *st.session_state.chat_history[-10:],
+                    ],
+                    temperature=0.5,
+                )
+                answer = resp.choices[0].message.content
+                st.session_state.chat_history.append({"role": "assistant", "content": answer})
+            except Exception as e:
+                st.session_state.chat_history.append({"role": "assistant", "content": f"오류가 발생했어요: {e}"})
 
 
 
