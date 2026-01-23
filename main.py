@@ -10,6 +10,18 @@ import os
 # ---------------------------
 st.set_page_config(page_title="전국 대학 평균 등록금 대시보드", layout="wide")
 
+st.sidebar.markdown(
+    """
+    <style>
+    .stSidebar p, .stSidebar div {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # ---------------------------
 # 1. 데이터 로드
 # ---------------------------
