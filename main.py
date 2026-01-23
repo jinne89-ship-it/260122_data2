@@ -376,3 +376,35 @@ if st.session_state.pending_message:
     # 여기서는 안전하게 rerun만 수행.
     st.rerun()
 
+# ---------------------------
+# (추가) 추천 질문 버튼 5개
+# ---------------------------
+st.sidebar.caption("👇 자주 묻는 질문을 눌러보세요")
+
+suggested_questions = [
+    "지금 선택한 조건(지역/설립형태)에서 평균 등록금은 어느 정도야?",
+    "등록금이 상대적으로 낮은 지역(시도)은 어디야? 이유도 설명해줘.",
+    "사립대와 국공립대 등록금 차이가 얼마나 나는지 쉽게 비교해줘.",
+    "상위 10% 등록금 대학들은 어떤 특징이 있을까?",
+    "내가 등록금 예산이 연 500만 원이라면 어떤 기준으로 대학을 골라야 해?"
+]
+
+# 5개 버튼을 보기 좋게 2-2-1로 배치
+b1, b2 = st.sidebar.columns(2)
+with b1:
+    if st.button("① 평균 등록금", key="q1", use_container_width=True):
+        st.session_state.pending_message = suggested_questions[0]
+with b2:
+    if st.button("② 낮은 지역 찾기", key="q2", use_container_width=True):
+        st.session_state.pending_message = suggested_questions[1]
+
+b3, b4 = st.sidebar.columns(2)
+with b3:
+    if st.button("③ 사립 vs 국공립", key="q3", use_container_width=True):
+        st.session_state.pending_message = suggested_questions[2]
+with b4:
+    if st.button("④ 상위 10% 특징", key="q4", use_container_width=True):
+        st.session_state.pending_message = suggested_questions[3]
+
+if st.sidebar.button("⑤ 예산으로 고르기", key="q5", use_container_width=True):
+    st.session_state.pending_message = suggested_questions[4]
