@@ -392,7 +392,7 @@ suggested_questions = [
     "내가 등록금 예산이 연 500만 원이라면 어떤 기준으로 대학을 골라야 해?"
 ]
 
-]# 5개 버튼을 보기 좋게 2-2-1로 배치
+# 5개 버튼을 보기 좋게 2-2-1로 배치
 b1, b2 = st.sidebar.columns(2)
 with b1:
     if st.button("① 평균 등록금", key="q1", use_container_width=True):
