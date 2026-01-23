@@ -261,7 +261,7 @@ st.download_button(
 )
 
 # =========================================================
-# 7. (추가) 사이드바 하단: 고등학생 상담 챗봇(OpenAI) - 안정 버전
+# 7. (추가) 사이드바 하단: 고등학생 상담 챗봇(OpenAI) - 완전 안정 버전
 # =========================================================
 st.sidebar.divider()
 st.sidebar.subheader("💬 등록금 상담 챗봇 (고등학생용)")
@@ -278,14 +278,19 @@ def get_openai_client():
 
 client = get_openai_client()
 
+# 대화 기록
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
         {"role": "assistant", "content": "안녕하세요! 원하는 지역/설립형태/대학구분을 말해주면 등록금 데이터를 바탕으로 비교를 도와줄게요 😊"}
     ]
 
-# 입력 버퍼(위젯과 분리)
-if "chat_draft" not in st.session_state:
-    st.session_state.chat_draft = ""
+# 위젯 입력값(절대 코드에서 직접 수정하지 않음)
+if "chat_input_box" not in st.session_state:
+    st.session_state.chat_input_box = ""
+
+# 전송 대기 메시지(이 값만 코드에서 컨트롤)
+if "pending_message" not in st.session_state:
+    st.session_state.pending_message = None
 
 # 현재 화면 필터/통계(챗봇 컨텍스트)
 filter_summary = {
@@ -300,17 +305,34 @@ filtered_stats = {
     "최저등록금": None if pd.isna(min_tuition) else float(min_tuition),
 }
 
-# 최근 대화 표시(사이드바 공간 고려)
+# 최근 대화 표시
 for msg in st.session_state.chat_history[-8:]:
     if msg["role"] == "user":
         st.sidebar.markdown(f"**🙋‍학생:** {msg['content']}")
     else:
         st.sidebar.markdown(f"**🤖상담:** {msg['content']}")
 
-def send_message():
-    user_text = st.session_state.chat_draft.strip()
-    if not user_text:
-        return
+def queue_message():
+    """입력창 내용을 pending_message로 '복사'만 한다. (위젯 key는 수정 금지)"""
+    text = st.session_state.chat_input_box.strip()
+    if text:
+        st.session_state.pending_message = text
+
+# Enter로 전송: on_change에서 queue만 수행
+st.sidebar.text_input(
+    "질문을 입력하세요 (Enter로 전송)",
+    key="chat_input_box",
+    on_change=queue_message
+)
+
+# 버튼 전송도 제공(클릭 시에도 queue)
+if st.sidebar.button("전송", use_container_width=True):
+    queue_message()
+
+# 실제 전송 처리(위젯 이후 실행)
+if st.session_state.pending_message:
+    user_text = st.session_state.pending_message
+    st.session_state.pending_message = None  # 먼저 비워서 중복 전송 방지
 
     st.session_state.chat_history.append({"role": "user", "content": user_text})
 
@@ -349,17 +371,7 @@ def send_message():
         except Exception as e:
             st.session_state.chat_history.append({"role": "assistant", "content": f"오류가 발생했어요: {e}"})
 
-    # ✅ 위젯 key를 직접 만지지 않고, draft만 비움(안전)
-    st.session_state.chat_draft = ""
-
-# ✅ Enter 치면 전송되도록 on_change 사용
-st.sidebar.text_input(
-    "질문을 입력하세요 (Enter로 전송)",
-    key="chat_draft",
-    on_change=send_message
-)
-
-# 버튼 전송도 같이 제공(선택)
-if st.sidebar.button("전송", use_container_width=True):
-    send_message()
+    # ✅ 입력창을 비우고 싶다면? -> 위젯 key를 건드리면 안 됨.
+    # 대신 rerun으로 새 run에서 초기화되도록, '입력창 key'에 default를 주는 구조로 바꿔야 함.
+    # 여기서는 안전하게 rerun만 수행.
     st.rerun()
