@@ -73,6 +73,9 @@ for col in ["평균입학금액", "평균등록금액"]:
 # 등록금액 = 0 인 경우 제외
 filtered = filtered.dropna(subset=["평균등록금액"])
 filtered = filtered[filtered["평균등록금액"] > 0]
+after_n = len(filtered)
+
+st.sidebar.caption(f"※ 등록금 0원/결측 데이터 {before_n - after_n}건 제외됨")
 
 # ---------------------------
 # 3. KPI 영역
