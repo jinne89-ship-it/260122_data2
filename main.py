@@ -211,6 +211,9 @@ else:
             return f"{sign}{gap:,.0f}원 ({sign}{pct:.1f}%)"
 
         # KPI 카드(8개 권장: 2줄)
+
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("우리대학", my_univ)
         c2.metric("평균등록금(우리대학)", f"{my_fee:,.0f} 원")
@@ -227,6 +230,7 @@ else:
         st.caption(
             f"※ 전국 중앙값 {nat_med:,.0f}원 / {my_region} 평균 {reg_avg:,.0f}원 / {my_type} 평균 {type_avg:,.0f}원 (현재 조회조건 기준)"
         )
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------
 # 4. 시각화 (Plotly)
@@ -254,7 +258,9 @@ fig.update_layout(
     height=520,
     margin=dict(l=20, r=20, t=60, b=40)
 )
+st.markdown('<div class="card">', unsafe_allow_html=True)
 st.plotly_chart(fig, use_container_width=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 st.subheader("📦 설립형태별 등록금 분포")
 
