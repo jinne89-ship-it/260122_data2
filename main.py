@@ -285,8 +285,18 @@ st.subheader("📋 대학별 상세 데이터")
 
 show_cols = ["대학교명", "시도명", "설립형태구분명", "평균입학금액", "평균등록금액"]
 exist_cols = [c for c in show_cols if c in filtered.columns]
-st.dataframe(filtered[exist_cols]
-        .sort_values(by="대학교명", ascending=True), use_container_width=True)
+st.dataframe(
+    filtered[exist_cols]
+        .sort_values(by=["시도명", "대학교명"], ascending=[True, True])
+        .reset_index(drop=True)              # 기존 index 제거
+        .assign(No=lambda x: x.index + 1)    # 조회 순서대로 No 생성
+        .loc[:, ["No"] + exist_cols]         # No를 맨 앞으로
+        .style.format({
+            "평균입학금액": "{:,.0f}",
+            "평균등록금액": "{:,.0f}",
+        }),
+    use_container_width=True
+)
 
 # ---------------------------
 # 6. 다운로드
