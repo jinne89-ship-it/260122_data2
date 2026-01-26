@@ -283,12 +283,10 @@ else:
 # ---------------------------
 st.subheader("📋 대학별 상세 데이터")
 
-st.dataframe(filtered[exist_cols], use_container_width=True)
-
 show_cols = ["대학교명", "시도명", "설립형태구분명", "평균입학금액", "평균등록금액"]
 exist_cols = [c for c in show_cols if c in filtered.columns]
 st.dataframe(filtered[exist_cols]
-        .sort_values(by="대학교명", ascending=True),, use_container_width=True)
+        .sort_values(by="대학교명", ascending=True), use_container_width=True)
 
 # ---------------------------
 # 6. 다운로드
