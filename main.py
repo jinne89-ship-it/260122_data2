@@ -5,25 +5,6 @@ import plotly.graph_objects as go
 from openai import OpenAI
 import os
 
-st.markdown(
-    """
-    <style>
-    .card {
-        padding: 1.2rem;
-        border-radius: 10px;
-        background-color: #ffffff;
-        border: 1px solid #e6e6e6;
-        margin-bottom: 1.2rem;
-    }
-    .card-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        margin-bottom: 0.6rem;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 # ---------------------------
 # 0. 페이지 설정(선택)
@@ -121,7 +102,6 @@ my_univ = st.sidebar.selectbox(
 # ---------------------------
 st.subheader("📌 요약 지표")
 
-
 col1, col2, col3, col4 = st.columns(4)
 
 #univ_count = int(filtered["대학교명"].nunique()) if "대학교명" in filtered.columns else len(filtered)
@@ -147,14 +127,10 @@ avg_tuition = rank_base["평균등록금액"].mean() if "평균등록금액" in 
 max_tuition = rank_base["평균등록금액"].max() if "평균등록금액" in rank_base.columns else float("nan")
 min_tuition = rank_base["평균등록금액"].min() if "평균등록금액" in rank_base.columns else float("nan")
 
-st.markdown('<div class="card">', unsafe_allow_html=True)
-
 col1.metric("대학 수", univ_count)
 col2.metric("평균 등록금(대학별 평균값 적용)", "-" if pd.isna(avg_tuition) else f"{avg_tuition:,.0f} 원")
 col3.metric("최고 등록금(대학별 평균값 적용)", "-" if pd.isna(max_tuition) else f"{max_tuition:,.0f} 원")
 col4.metric("최저 등록금(대학별 평균값 적용)", "-" if pd.isna(min_tuition) else f"{min_tuition:,.0f} 원")
-
-st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------
 # 3.5 우리대학 벤치마킹 패널
@@ -211,8 +187,6 @@ else:
             return f"{sign}{gap:,.0f}원 ({sign}{pct:.1f}%)"
 
         # KPI 카드(8개 권장: 2줄)
-
-        st.markdown('<div class="card">', unsafe_allow_html=True)
         
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("우리대학", my_univ)
@@ -230,7 +204,6 @@ else:
         st.caption(
             f"※ 전국 중앙값 {nat_med:,.0f}원 / {my_region} 평균 {reg_avg:,.0f}원 / {my_type} 평균 {type_avg:,.0f}원 (현재 조회조건 기준)"
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------
 # 4. 시각화 (Plotly)
@@ -258,9 +231,8 @@ fig.update_layout(
     height=520,
     margin=dict(l=20, r=20, t=60, b=40)
 )
-st.markdown('<div class="card">', unsafe_allow_html=True)
+
 st.plotly_chart(fig, use_container_width=True)
-st.markdown("</div>", unsafe_allow_html=True)
 
 st.subheader("📦 설립형태별 등록금 분포")
 
