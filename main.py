@@ -85,16 +85,16 @@ st.subheader("📌 요약 지표")
 
 col1, col2, col3, col4 = st.columns(4)
 
-univ_count = int(filtered["대학교명"].nunique()) if "대학교명" in filtered.columns else len(filtered)
+#univ_count = int(filtered["대학교명"].nunique()) if "대학교명" in filtered.columns else len(filtered)
 
-avg_tuition = filtered["평균등록금액"].mean() if "평균등록금액" in filtered.columns else float("nan")
-max_tuition = filtered["평균등록금액"].max() if "평균등록금액" in filtered.columns else float("nan")
-min_tuition = filtered["평균등록금액"].min() if "평균등록금액" in filtered.columns else float("nan")
+#avg_tuition = filtered["평균등록금액"].mean() if "평균등록금액" in filtered.columns else float("nan")
+#max_tuition = filtered["평균등록금액"].max() if "평균등록금액" in filtered.columns else float("nan")
+#min_tuition = filtered["평균등록금액"].min() if "평균등록금액" in filtered.columns else float("nan")
 
-col1.metric("대학 수", univ_count)
-col2.metric("평균 등록금", "-" if pd.isna(avg_tuition) else f"{avg_tuition:,.0f} 원")
-col3.metric("최고 등록금", "-" if pd.isna(max_tuition) else f"{max_tuition:,.0f} 원")
-col4.metric("최저 등록금", "-" if pd.isna(min_tuition) else f"{min_tuition:,.0f} 원")
+#col1.metric("대학 수", univ_count)
+#col2.metric("평균 등록금", "-" if pd.isna(avg_tuition) else f"{avg_tuition:,.0f} 원")
+#col3.metric("최고 등록금", "-" if pd.isna(max_tuition) else f"{max_tuition:,.0f} 원")
+#col4.metric("최저 등록금", "-" if pd.isna(min_tuition) else f"{min_tuition:,.0f} 원")
 
 
 rank_base = (
