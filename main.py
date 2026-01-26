@@ -333,13 +333,6 @@ def get_openai_client():
 
 client = get_openai_client()
 
-# ---------- 챗봇 근거 데이터(내장 파일 기반) 생성 ----------
-# 대학 단위 평균(이미 rank_base를 만들고 있다면 그걸 재사용)
-rank_base_chat = (
-    filtered.dropna(subset=["대학교명", "평균등록금액"])
-    .groupby(["대학교명", "시도명", "설립형태구분명"], as_index=False)["평균등록금액"]
-    .mean()
-)
 
 # ---------- session state init ----------
 if "chat_history" not in st.session_state:
@@ -373,7 +366,7 @@ for msg in st.session_state.chat_history[-8:]:
     if msg["role"] == "user":
         st.sidebar.markdown(f"**🙋‍사용자:** {msg['content']}")
     else:
-        st.sidebar.markdown(f"**🤖분석:** {msg['content']}")
+        st.sidebar.markdown(f"**🤖분석챗봇:** {msg['content']}")
 
 # ---------- input + send ----------
 def queue_message_from_textbox():
