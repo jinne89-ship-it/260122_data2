@@ -5,6 +5,26 @@ import plotly.graph_objects as go
 from openai import OpenAI
 import os
 
+st.markdown(
+    """
+    <style>
+    .card {
+        padding: 1.2rem;
+        border-radius: 10px;
+        background-color: #ffffff;
+        border: 1px solid #e6e6e6;
+        margin-bottom: 1.2rem;
+    }
+    .card-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: 0.6rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # ---------------------------
 # 0. 페이지 설정(선택)
 # ---------------------------
