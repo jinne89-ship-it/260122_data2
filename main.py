@@ -282,15 +282,20 @@ else:
 # 5. 데이터 테이블
 # ---------------------------
 st.subheader("📋 대학별 상세 데이터")
+st.caption("※ 컬럼명 클릭 시 정렬 기준을 변경할 수 있습니다.")
+sort_col = st.selectbox(
+    "정렬 기준",
+    ["시도명", "대학교명", "평균등록금액"]
+)
 
 show_cols = ["대학교명", "시도명", "설립형태구분명", "평균입학금액", "평균등록금액"]
 exist_cols = [c for c in show_cols if c in filtered.columns]
 st.dataframe(
     filtered[exist_cols]
-        .sort_values(by=["시도명", "대학교명"], ascending=[True, True])
-        .reset_index(drop=True)              # 기존 index 제거
-        .assign(No=lambda x: x.index + 1)    # 조회 순서대로 No 생성
-        .loc[:, ["No"] + exist_cols]         # No를 맨 앞으로
+        .sort_values(by=[sort_col, "대학교명"])
+        .reset_index(drop=True)
+        .assign(No=lambda x: x.index + 1)
+        .loc[:, ["No"] + exist_cols]
         .style.format({
             "평균입학금액": "{:,.0f}",
             "평균등록금액": "{:,.0f}",
