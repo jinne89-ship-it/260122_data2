@@ -114,6 +114,78 @@ col3.metric("최고 등록금(대학별 평균값 적용)", "-" if pd.isna(max_t
 col4.metric("최저 등록금(대학별 평균값 적용)", "-" if pd.isna(min_tuition) else f"{min_tuition:,.0f} 원")
 
 # ---------------------------
+# 3.5 우리대학 벤치마킹 패널
+# ---------------------------
+st.subheader("🏫 우리대학 벤치마킹")
+
+if "my_univ" not in globals():
+    st.info("왼쪽 사이드바에서 '우리대학(비교 기준)'을 먼저 선택해 주세요.")
+elif my_univ == "(선택 안 함)":
+    st.info("왼쪽 사이드바에서 '우리대학(비교 기준)'을 선택하면 전국/시도/설립형태 기준 순위와 격차를 보여드립니다.")
+else:
+    base = rank_base.dropna(subset=["대학교명", "평균등록금액"]).copy()
+    base = base.sort_values("평균등록금액", ascending=False).reset_index(drop=True)
+    n = len(base)
+
+    if n < 2:
+        st.warning("현재 조회조건에서 대학 수가 너무 적어 벤치마킹이 어렵습니다. 조회조건을 완화해 보세요.")
+    elif my_univ not in set(base["대학교명"]):
+        st.warning("현재 조회조건(연도/시도/설립형태)에서 선택한 대학이 조회되지 않습니다. 조회조건을 조정해 보세요.")
+    else:
+        base["전국순위"] = base["평균등록금액"].rank(ascending=False, method="min").astype(int)
+        base["전국백분위(낮을수록 상위)"] = ((base["전국순위"] - 1) / (n - 1) * 100).round(1)
+
+        row = base.loc[base["대학교명"] == my_univ].iloc[0]
+        my_fee = float(row["평균등록금액"])
+        my_region = row["시도명"]
+        my_type = row["설립형태구분명"]
+
+        # 전국 평균/중앙값
+        nat_avg = float(base["평균등록금액"].mean())
+        nat_med = float(base["평균등록금액"].median())
+
+        # 시도 내 순위
+        reg_base = base[base["시도명"] == my_region].copy()
+        reg_n = len(reg_base)
+        reg_base["시도순위"] = reg_base["평균등록금액"].rank(ascending=False, method="min").astype(int)
+        reg_base["시도백분위(낮을수록 상위)"] = ((reg_base["시도순위"] - 1) / (reg_n - 1) * 100).round(1) if reg_n > 1 else 0.0
+        reg_row = reg_base.loc[reg_base["대학교명"] == my_univ].iloc[0]
+        reg_avg = float(reg_base["평균등록금액"].mean())
+
+        # 설립형태 내 순위
+        type_base = base[base["설립형태구분명"] == my_type].copy()
+        type_n = len(type_base)
+        type_base["유형순위"] = type_base["평균등록금액"].rank(ascending=False, method="min").astype(int)
+        type_base["유형백분위(낮을수록 상위)"] = ((type_base["유형순위"] - 1) / (type_n - 1) * 100).round(1) if type_n > 1 else 0.0
+        type_row = type_base.loc[type_base["대학교명"] == my_univ].iloc[0]
+        type_avg = float(type_base["평균등록금액"].mean())
+
+        # 격차(원/%) 계산
+        def gap_str(x, ref):
+            gap = x - ref
+            pct = (gap / ref * 100) if ref != 0 else 0.0
+            sign = "+" if gap >= 0 else ""
+            return f"{sign}{gap:,.0f}원 ({sign}{pct:.1f}%)"
+
+        # KPI 카드(8개 권장: 2줄)
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("우리대학", my_univ)
+        c2.metric("평균등록금(우리대학)", f"{my_fee:,.0f} 원")
+        c3.metric("전국 순위/백분위", f"{int(row['전국순위'])} / {n}  ·  {float(row['전국백분위(낮을수록 상위)']):.1f}%")
+        c4.metric("전국 평균 대비", gap_str(my_fee, nat_avg))
+
+        d1, d2, d3, d4 = st.columns(4)
+        d1.metric("시도(지역)", f"{my_region} (n={reg_n})")
+        d2.metric("시도 내 순위/백분위", f"{int(reg_row['시도순위'])} / {reg_n}  ·  {float(reg_row['시도백분위(낮을수록 상위)']):.1f}%")
+        d3.metric("시도 평균 대비", gap_str(my_fee, reg_avg))
+        d4.metric("설립형태 평균 대비", gap_str(my_fee, type_avg))
+
+        # (선택) 핵심 비교 요약 한 줄
+        st.caption(
+            f"※ 전국 중앙값 {nat_med:,.0f}원 / {my_region} 평균 {reg_avg:,.0f}원 / {my_type} 평균 {type_avg:,.0f}원 (현재 조회조건 기준)"
+        )
+
+# ---------------------------
 # 4. 시각화 (Plotly)
 # ---------------------------
 st.subheader("📊 시도별 평균 등록금")
