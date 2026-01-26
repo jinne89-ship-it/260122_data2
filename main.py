@@ -79,6 +79,24 @@ after_n = len(filtered)
 st.sidebar.caption(f"※ 등록금 0원/결측 데이터 {before_n - after_n}건 제외됨")
 
 # ---------------------------
+# 2-1. 우리대학 선택 (비교 기준)
+# ---------------------------
+st.sidebar.subheader("🏫 우리대학 선택 (비교 기준)")
+
+univ_options = (
+    sorted(filtered["대학교명"].dropna().unique())
+    if "대학교명" in filtered.columns
+    else []
+)
+
+my_univ = st.sidebar.selectbox(
+    "우리대학을 선택하세요",
+    options=["(선택 안 함)"] + univ_options,
+    index=0,
+    help="선택한 대학을 기준으로 전국/지역/설립형태 내 등록금 위치를 분석합니다."
+)
+
+# ---------------------------
 # 3. KPI 영역
 # ---------------------------
 st.subheader("📌 요약 지표")
