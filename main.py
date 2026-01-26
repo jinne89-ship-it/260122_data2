@@ -71,6 +71,7 @@ for col in ["평균입학금액", "평균등록금액"]:
         filtered[col] = pd.to_numeric(filtered[col], errors="coerce")
 
 # 등록금액 = 0 인 경우 제외
+before_n = len(filtered)
 filtered = filtered.dropna(subset=["평균등록금액"])
 filtered = filtered[filtered["평균등록금액"] > 0]
 after_n = len(filtered)
