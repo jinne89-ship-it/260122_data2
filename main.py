@@ -121,7 +121,6 @@ my_univ = st.sidebar.selectbox(
 # ---------------------------
 st.subheader("📌 요약 지표")
 
-st.markdown('<div class="card">', unsafe_allow_html=True)
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -147,6 +146,8 @@ univ_count = int(rank_base["대학교명"].nunique()) if "대학교명" in rank_
 avg_tuition = rank_base["평균등록금액"].mean() if "평균등록금액" in rank_base.columns else float("nan")
 max_tuition = rank_base["평균등록금액"].max() if "평균등록금액" in rank_base.columns else float("nan")
 min_tuition = rank_base["평균등록금액"].min() if "평균등록금액" in rank_base.columns else float("nan")
+
+st.markdown('<div class="card">', unsafe_allow_html=True)
 
 col1.metric("대학 수", univ_count)
 col2.metric("평균 등록금(대학별 평균값 적용)", "-" if pd.isna(avg_tuition) else f"{avg_tuition:,.0f} 원")
