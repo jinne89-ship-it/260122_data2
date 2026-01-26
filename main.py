@@ -314,11 +314,13 @@ st.download_button(
 )
 
 # =========================================================
-# 7. (추가) 사이드바 하단: 고등학생 상담 챗봇(OpenAI) - 완전 안정 버전
+# 7. (추가) 사이드바 하단: 등록금 분석 챗봇(OpenAI)
+#    - 대학(행정부서) 분석용 / 버튼 1회 클릭 즉시 응답
 # =========================================================
 st.sidebar.divider()
-st.sidebar.subheader("💬 등록금 상담 챗봇 (고등학생용)")
+st.sidebar.subheader("💬 등록금 분석 챗봇")
 
+# ---------- OpenAI client ----------
 def get_openai_client():
     api_key = None
     if hasattr(st, "secrets"):
@@ -331,123 +333,137 @@ def get_openai_client():
 
 client = get_openai_client()
 
-# 대화 기록
+# ---------- session state init ----------
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
-        {"role": "assistant", "content": "안녕하세요! 원하는 지역/설립형태/대학구분을 말해주면 등록금 데이터를 바탕으로 비교를 도와줄게요 😊"}
+        {"role": "assistant", "content": "안녕하세요. 현재 조회조건 기준으로 등록금 데이터를 요약·비교·해석해 드립니다. (예: 우리대학 위치, 지역 내 비교, 국공립/사립 격차)"}
     ]
 
-# 위젯 입력값(절대 코드에서 직접 수정하지 않음)
 if "chat_input_box" not in st.session_state:
     st.session_state.chat_input_box = ""
 
-# 전송 대기 메시지(이 값만 코드에서 컨트롤)
 if "pending_message" not in st.session_state:
     st.session_state.pending_message = None
 
-# 현재 화면 필터/통계(챗봇 컨텍스트)
+# ---------- context for the bot ----------
 filter_summary = {
     "기준연도": year,
     "시도명": region if region else "전체",
     "설립형태": found_type if found_type else "전체",
 }
+
 filtered_stats = {
-    "대학수": univ_count,
-    "평균등록금": None if pd.isna(avg_tuition) else float(avg_tuition),
-    "최고등록금": None if pd.isna(max_tuition) else float(max_tuition),
-    "최저등록금": None if pd.isna(min_tuition) else float(min_tuition),
+    "대학수(대학단위)": int(univ_count) if "univ_count" in globals() else None,
+    "평균등록금(대학단위)": None if pd.isna(avg_tuition) else float(avg_tuition),
+    "최고등록금(대학단위)": None if pd.isna(max_tuition) else float(max_tuition),
+    "최저등록금(대학단위)": None if pd.isna(min_tuition) else float(min_tuition),
 }
 
-# 최근 대화 표시
+# ---------- recent chat render ----------
+st.sidebar.caption("최근 대화")
 for msg in st.session_state.chat_history[-8:]:
     if msg["role"] == "user":
-        st.sidebar.markdown(f"**🙋‍학생:** {msg['content']}")
+        st.sidebar.markdown(f"**🙋‍사용자:** {msg['content']}")
     else:
-        st.sidebar.markdown(f"**🤖상담:** {msg['content']}")
+        st.sidebar.markdown(f"**🤖분석:** {msg['content']}")
 
-def queue_message():
-    """입력창 내용을 pending_message로 '복사'만 한다. (위젯 key는 수정 금지)"""
+# ---------- input + send ----------
+def queue_message_from_textbox():
     text = st.session_state.chat_input_box.strip()
     if text:
         st.session_state.pending_message = text
 
-# Enter로 전송: on_change에서 queue만 수행
 st.sidebar.text_input(
-    "질문을 입력하세요 (Enter로 전송)",
+    "질문 입력 (Enter로 전송)",
     key="chat_input_box",
-    on_change=queue_message
+    on_change=queue_message_from_textbox
 )
 
-
-# 버튼 전송도 제공(클릭 시에도 queue)
 if st.sidebar.button("전송", use_container_width=True):
-    queue_message()
+    queue_message_from_textbox()
 
+# ---------- controls: 기준 대학 선택 + 추천 질문 ----------
+st.sidebar.divider()
+st.sidebar.subheader("🏫 기준 대학 선택")
 
-# ---------------------------
-# (추가) 추천 질문 버튼 5개
-# ---------------------------
-st.sidebar.caption("👇 자주 묻는 질문을 눌러보세요")
+univ_options = sorted(filtered["대학교명"].dropna().unique()) if "대학교명" in filtered.columns else []
+my_univ = st.sidebar.selectbox("우리대학(비교 기준)", options=["(선택 안 함)"] + univ_options)
 
-suggested_questions = [
-    "지금 선택한 조건(지역/설립형태)에서 평균 등록금은 어느 정도야?",
-    "등록금이 상대적으로 낮은 지역(시도)은 어디야? 이유도 설명해줘.",
-    "사립대와 국공립대 등록금 차이가 얼마나 나는지 쉽게 비교해줘.",
-    "상위 10% 등록금 대학들은 어떤 특징이 있을까?",
-    "내가 등록금 예산이 연 500만 원이라면 어떤 기준으로 대학을 골라야 해?"
-]
+# 컨텍스트에 포함(답변 품질 개선)
+filter_summary["우리대학"] = my_univ
 
-# 5개 버튼을 보기 좋게 2-2-1로 배치
+st.sidebar.caption("👇 자주 쓰는 분석 질문")
+if my_univ == "(선택 안 함)":
+    suggested_questions = [
+        "현재 조회조건에서 등록금이 높은 대학/낮은 대학(Top/Bottom)을 요약해줘.",
+        "현재 조회조건에서 시도별 평균 등록금 차이를 표/핵심 포인트로 정리해줘.",
+        "현재 조회조건에서 국공립과 사립의 평균 등록금 격차(원/%)를 계산해줘.",
+        "상·하위 10% 대학 분포를 근거로 해석 포인트(시사점) 3가지를 제시해줘.",
+    ]
+else:
+    suggested_questions = [
+        f"'{my_univ}'의 평균 등록금은 (현재 조회조건)에서 전체 대학 대비 순위/백분위를 알려줘.",
+        f"'{my_univ}'이(가) 속한 시도 내에서 등록금 수준이 높은 편인지 낮은 편인지 비교해줘.",
+        "현재 조회조건에서 국공립과 사립의 평균 등록금 격차(원/%)를 계산해줘.",
+        "상·하위 10% 대학 분포를 근거로 해석 포인트(시사점) 3가지를 제시해줘.",
+    ]
+
 b1, b2 = st.sidebar.columns(2)
 with b1:
-    if st.button("① 평균 등록금", key="q1", use_container_width=True):
+    if st.button("① 기준대학 위치", key="q1", use_container_width=True):
         st.session_state.pending_message = suggested_questions[0]
+        st.rerun()
 with b2:
-    if st.button("② 낮은 지역 찾기", key="q2", use_container_width=True):
+    if st.button("② 지역 내 비교", key="q2", use_container_width=True):
         st.session_state.pending_message = suggested_questions[1]
+        st.rerun()
+
 b3, b4 = st.sidebar.columns(2)
 with b3:
-    if st.button("③ 사립 vs 국공립", key="q3", use_container_width=True):
+    if st.button("③ 국공립 vs 사립", key="q3", use_container_width=True):
         st.session_state.pending_message = suggested_questions[2]
+        st.rerun()
 with b4:
-    if st.button("④ 상위 10% 특징", key="q4", use_container_width=True):
+    if st.button("④ 시사점", key="q4", use_container_width=True):
         st.session_state.pending_message = suggested_questions[3]
-if st.sidebar.button("⑤ 예산으로 고르기", key="q5", use_container_width=True):
-    st.session_state.pending_message = suggested_questions[4]
+        st.rerun()
 
+if st.sidebar.button("대화 초기화", use_container_width=True):
+    st.session_state.chat_history = [
+        {"role": "assistant", "content": "대화가 초기화되었습니다. 현재 조회조건 기준으로 등록금 분석 질문을 입력해 주세요."}
+    ]
+    st.session_state.pending_message = None
+    st.rerun()
 
-
-
-# 실제 전송 처리(위젯 이후 실행)
+# ---------- send pending message ----------
 if st.session_state.pending_message:
     user_text = st.session_state.pending_message
-    st.session_state.pending_message = None  # 먼저 비워서 중복 전송 방지
+    st.session_state.pending_message = None  # 중복 전송 방지
 
     st.session_state.chat_history.append({"role": "user", "content": user_text})
 
     if client is None:
         st.session_state.chat_history.append({
             "role": "assistant",
-            "content": "API 키가 설정되지 않았어요. Streamlit Secrets(OPENAI_API_KEY) 또는 환경변수를 설정해 주세요."
+            "content": "OPENAI_API_KEY가 설정되지 않았습니다. Streamlit Secrets(OPENAI_API_KEY) 또는 환경변수를 확인해 주세요."
         })
+        st.rerun()
     else:
         system_prompt = f"""
-너는 고등학생을 위한 대학 등록금 상담 챗봇이야.
-- 친절하고 쉬운 한국어로 답해.
-- 이 앱은 '전국 대학 평균 등록금 공공데이터'를 기반으로 한다.
-- 현재 화면의 필터/통계를 참고해서 설명해.
-- 특정 대학 합격을 보장하거나 과도한 단정/비방을 하지 마.
-- 개인정보(전화번호, 주민번호 등)를 요구하지 마.
-- 가능한 경우 선택지를 2~3개로 정리해주고, 다음 질문을 제안해.
+너는 '대학 등록금 데이터' 분석을 지원하는 분석 어시스턴트다.
+- 사용자의 조회조건(연도/시도/설립형태/우리대학)을 우선 반영해 설명한다.
+- 가능한 경우 수치를 포함(평균/최고/최저/격차/백분위 등)하여 근거 중심으로 답한다.
+- 데이터로 확정할 수 없는 내용은 추정하지 말고, 필요한 추가 데이터가 무엇인지 제안한다.
+- 답변은 (1)결론 (2)근거 수치 (3)해석/시사점 (4)다음 분석 제안 순서로 간결하게 작성한다.
 
-[현재 필터]
+[현재 조회조건]
 {filter_summary}
 
-[현재 필터 결과 요약 통계]
+[현재 화면 요약 통계(대학단위)]
 {filtered_stats}
 """
 
-        with st.sidebar.spinner("답변 생성 중입니다... 잠시만 기다려 주세요 🙂"):
+        with st.sidebar.spinner("분석 중입니다... 잠시만 기다려 주세요 🙂"):
             try:
                 resp = client.chat.completions.create(
                     model="gpt-4o-mini",
@@ -455,17 +471,11 @@ if st.session_state.pending_message:
                         {"role": "system", "content": system_prompt},
                         *st.session_state.chat_history[-10:],
                     ],
-                    temperature=0.5,
+                    temperature=0.3,
                 )
                 answer = resp.choices[0].message.content
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
             except Exception as e:
                 st.session_state.chat_history.append({"role": "assistant", "content": f"오류가 발생했어요: {e}"})
 
-
-
-    # ✅ 입력창을 비우고 싶다면? -> 위젯 key를 건드리면 안 됨.
-    # 대신 rerun으로 새 run에서 초기화되도록, '입력창 key'에 default를 주는 구조로 바꿔야 함.
-    # 여기서는 안전하게 rerun만 수행.
-    # st.rerun()
-
+        st.rerun()
