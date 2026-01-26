@@ -43,7 +43,7 @@ st.title("🎓 전국 대학 평균 등록금 대시보드")
 # ---------------------------
 # 2. 사이드바 필터
 # ---------------------------
-st.sidebar.header("필터")
+st.sidebar.header("조회조건")
 
 year = st.sidebar.selectbox(
     "기준연도", sorted(df["기준연도"].dropna().unique())
@@ -69,6 +69,10 @@ if found_type:
 for col in ["평균입학금액", "평균등록금액"]:
     if col in filtered.columns:
         filtered[col] = pd.to_numeric(filtered[col], errors="coerce")
+
+# 등록금액 = 0 인 경우 제외
+filtered = filtered.dropna(subset=["평균등록금액"])
+filtered = filtered[filtered["평균등록금액"] > 0]
 
 # ---------------------------
 # 3. KPI 영역
