@@ -121,6 +121,8 @@ my_univ = st.sidebar.selectbox(
 # ---------------------------
 st.subheader("📌 요약 지표")
 
+st.markdown('<div class="card"><div class="card-title">📌 요약 지표</div>', unsafe_allow_html=True)
+
 col1, col2, col3, col4 = st.columns(4)
 
 #univ_count = int(filtered["대학교명"].nunique()) if "대학교명" in filtered.columns else len(filtered)
@@ -150,6 +152,8 @@ col1.metric("대학 수", univ_count)
 col2.metric("평균 등록금(대학별 평균값 적용)", "-" if pd.isna(avg_tuition) else f"{avg_tuition:,.0f} 원")
 col3.metric("최고 등록금(대학별 평균값 적용)", "-" if pd.isna(max_tuition) else f"{max_tuition:,.0f} 원")
 col4.metric("최저 등록금(대학별 평균값 적용)", "-" if pd.isna(min_tuition) else f"{min_tuition:,.0f} 원")
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------------------
 # 3.5 우리대학 벤치마킹 패널
