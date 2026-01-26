@@ -230,7 +230,7 @@ else:
         st.caption(
             f"※ 전국 중앙값 {nat_med:,.0f}원 / {my_region} 평균 {reg_avg:,.0f}원 / {my_type} 평균 {type_avg:,.0f}원 (현재 조회조건 기준)"
         )
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------
 # 4. 시각화 (Plotly)
