@@ -8,7 +8,7 @@ import os
 # ---------------------------
 # 0. 페이지 설정(선택)
 # ---------------------------
-st.set_page_config(page_title="전국 대학 평균 등록금 대시보드", layout="wide")
+st.set_page_config(page_title="전국 대학 등록금 현황 분석 대시보드", layout="wide")
 
 st.sidebar.markdown(
     """
